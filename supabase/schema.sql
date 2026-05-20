@@ -21,12 +21,15 @@ create table if not exists rag.chunks (
   page_number  int,
   chunk_index  int,
   content      text not null,
-  embedding    vector(768),                 -- Vertex text-embedding-005
+  embedding    vector(768),                 -- Vertex text-embedding-004
   created_at   timestamptz default now()
 );
 
+-- HNSW (not IVFFlat): builds incrementally, accurate from row 1, no rebuild needed
+-- as the table grows. IVFFlat would require ~lists*40 rows before its centroids
+-- are meaningful, which fails on a cold-start demo.
 create index if not exists chunks_embedding_idx
-  on rag.chunks using ivfflat (embedding vector_cosine_ops) with (lists = 100);
+  on rag.chunks using hnsw (embedding vector_cosine_ops);
 
 create index if not exists chunks_document_id_idx  on rag.chunks(document_id);
 create index if not exists documents_created_at_idx on rag.documents(created_at);

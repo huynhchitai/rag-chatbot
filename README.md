@@ -2,7 +2,7 @@
 
 Upload a PDF, ask questions, get streamed answers with `[Source N]` citations (click a citation to see the snippet and page number).
 
-**Stack:** Next.js 14 (App Router, TS, Tailwind) · **Gemini 2.5 Flash** via **Vertex AI** for generation · **Vertex `text-embedding-005`** (768d) for embeddings · Supabase Postgres + pgvector · Upstash Redis for rate limit · Vercel for deploy + cron.
+**Stack:** Next.js 14 (App Router, TS, Tailwind) · **Gemini 2.5 Flash** via **Vertex AI** for generation · **Vertex `text-embedding-004`** (768d) for embeddings · Supabase Postgres + pgvector · Upstash Redis for rate limit · Vercel for deploy + cron.
 
 ## Flow
 

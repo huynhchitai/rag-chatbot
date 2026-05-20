@@ -128,22 +128,32 @@ export async function POST(req: NextRequest) {
       }
       sse.emit("parsed", { pages: parsed.numPages });
 
-      const rows: { document_id: string; page_number: number; chunk_index: number; content: string }[] = [];
-      // document_id placeholder — fill in after insert
+      const baseRows: { page_number: number; chunk_index: number; content: string }[] = [];
       for (const p of parsed.pages) {
         const pieces = chunkText(p.text);
         pieces.forEach((content, idx) => {
-          rows.push({ document_id: "", page_number: p.page, chunk_index: idx, content });
+          baseRows.push({ page_number: p.page, chunk_index: idx, content });
         });
       }
 
-      if (rows.length === 0) {
+      if (baseRows.length === 0) {
         sse.error("No extractable text — scanned PDF?");
         return;
       }
 
-      sse.emit("chunked", { chunks: rows.length });
+      sse.emit("chunked", { chunks: baseRows.length });
 
+      // Embed FIRST. If this fails (quota, network, etc.) we never touched the
+      // documents table — no orphan row, no content_hash lock-out on retry.
+      const vectors = await embed(
+        baseRows.map((r) => r.content),
+        (done, total) => sse.emit("embed", { done, total }),
+      );
+
+      sse.emit("status", { stage: "storing" });
+
+      // Insert document, then chunks. If chunk insert fails we hard-delete
+      // the document and verify the cleanup actually happened.
       const { data: doc, error: docErr } = await supabaseAdmin
         .from("documents")
         .insert({ filename: file.name, num_pages: parsed.numPages, content_hash: hash })
@@ -154,21 +164,26 @@ export async function POST(req: NextRequest) {
         return;
       }
       const documentId = doc.id as string;
-      rows.forEach((r) => (r.document_id = documentId));
 
-      const vectors = await embed(
-        rows.map((r) => r.content),
-        (done, total) => sse.emit("embed", { done, total }),
-      );
+      const embedded = baseRows.map((r, i) => ({
+        document_id: documentId,
+        ...r,
+        embedding: vectors[i],
+      }));
 
-      const embedded = rows.map((r, i) => ({ ...r, embedding: vectors[i] }));
-
-      sse.emit("status", { stage: "storing" });
       const { error: insertErr } = await supabaseAdmin.from("chunks").insert(embedded);
       if (insertErr) {
-        // best-effort rollback of the document row
-        await supabaseAdmin.from("documents").delete().eq("id", documentId);
-        sse.error(insertErr.message);
+        const { error: rollbackErr } = await supabaseAdmin
+          .from("documents")
+          .delete()
+          .eq("id", documentId);
+        if (rollbackErr) {
+          sse.error(
+            `chunks insert failed (${insertErr.message}); rollback also failed (${rollbackErr.message}) — document ${documentId} may need manual cleanup`,
+          );
+        } else {
+          sse.error(insertErr.message);
+        }
         return;
       }
 

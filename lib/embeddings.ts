@@ -29,7 +29,7 @@ export function chunkText(text: string, size = CHUNK_SIZE, overlap = CHUNK_OVERL
   return chunks.filter((c) => c.length > 0);
 }
 
-// Vertex text-embedding-005 limits:
+// Vertex text-embedding-004 limits:
 //   - 250 inputs per request
 //   - ~20,000 tokens per request (whole batch)
 // Pessimistic estimate: chars/2 covers Vietnamese / CJK / dense technical text.

@@ -11,9 +11,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const { data, error } = await supabaseAdmin.rpc("cleanup_old_documents", {
-    older_than: "24 hours",
-  });
+  // Pass no args — SQL function default is `interval '24 hours'`.
+  // Passing a string requires PostgREST text→interval cast, which silently 500s on some setups.
+  const { data, error } = await supabaseAdmin.rpc("cleanup_old_documents");
 
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

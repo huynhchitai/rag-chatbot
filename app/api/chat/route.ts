@@ -9,6 +9,8 @@ export const maxDuration = 60;
 
 const TOP_K = 5;
 const MAX_OUTPUT_TOKENS = 1024;
+const MAX_HISTORY_TURNS = 10; // last N messages sent to Vertex — caps cost + context window risk
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -47,8 +49,8 @@ export async function POST(req: NextRequest) {
     if (!lastUser?.content?.trim()) {
       return new Response(JSON.stringify({ error: "No user message" }), { status: 400 });
     }
-    if (!documentId) {
-      return new Response(JSON.stringify({ error: "Missing documentId" }), { status: 400 });
+    if (!documentId || !UUID_RE.test(documentId)) {
+      return new Response(JSON.stringify({ error: "Missing or invalid documentId" }), { status: 400 });
     }
 
     const queryEmbedding = await embedOne(lastUser.content);
@@ -83,8 +85,10 @@ Rules:
 CONTEXT:
 ${contextBlock}`;
 
-    // Convert chat history to Vertex format. Vertex uses role: "user" | "model".
-    const contents = messages.map((m) => ({
+    // Cap conversation history before sending. Otherwise a long thread accumulates
+    // unbounded tokens — the rate limit counts requests, not tokens.
+    const trimmed = messages.slice(-MAX_HISTORY_TURNS);
+    const contents = trimmed.map((m) => ({
       role: m.role === "assistant" ? "model" : "user",
       parts: [{ text: m.content }],
     }));
