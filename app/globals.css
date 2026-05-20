@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    height: 100%;
+  }
+  body {
+    background: #FFFFFF;
+    color: #0A0A0A;
+    font-family: var(--font-sans), system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection {
+    background: #FF6B00;
+    color: #FFFFFF;
+  }
+  /* Scrollbar — subtle */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #E5E5E5;
+    border-radius: 999px;
+    border: 2px solid #FFFFFF;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #D4D4D8;
+  }
+}
+
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+  .text-pretty  { text-wrap: pretty; }
+
+  /* Small tag-like label, used sparingly for section eyebrow text */
+  .eyebrow {
+    font-family: var(--font-mono), monospace;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: #525252;
+  }
+
+  /* Live indicator */
+  .live-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 999px;
+    background: #16A34A;
+    box-shadow: 0 0 0 0 rgba(22,163,74,0.4);
+    animation: pulse 2.4s ease-out infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(22,163,74,.4); }
+    70%  { box-shadow: 0 0 0 7px rgba(22,163,74,0); }
+    100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+  }
+
+  /* Reveal animation */
+  .reveal {
+    opacity: 0;
+    transform: translateY(6px);
+    animation: reveal .55s cubic-bezier(.2,.7,.3,1) forwards;
+  }
+  @keyframes reveal {
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .delay-1 { animation-delay: .04s; }
+  .delay-2 { animation-delay: .10s; }
+  .delay-3 { animation-delay: .18s; }
+  .delay-4 { animation-delay: .26s; }
+  .delay-5 { animation-delay: .34s; }
+
+  /* Subtle dotted background for empty hero */
+  .dot-grid {
+    background-image: radial-gradient(rgba(10,10,10,0.06) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  /* Focus ring matches accent */
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(255,107,0,0.18);
+    border-color: #FF6B00;
+  }
+}
