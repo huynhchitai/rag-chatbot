@@ -323,7 +323,7 @@ export default function HowItWorks() {
       )}
 
       <footer className="reveal delay-5 mt-12 flex items-center justify-between border-t border-line pt-3 text-xs text-muted">
-        <span>© chitai.dev · 2026</span>
+        <span>© Tai Huynh · 2026</span>
         <span className="inline-flex items-center gap-2">
           <span className="live-dot" /> Auto-refresh · 15s
         </span>

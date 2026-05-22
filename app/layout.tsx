@@ -17,7 +17,7 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RAG Chatbot — chitai.dev",
+  title: "RAG Chatbot — Tai Huynh",
   description:
     "Upload a PDF, ask anything, get cited answers. A working demo of a production-grade retrieval-augmented chatbot.",
 };
