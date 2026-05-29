@@ -1,15 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
 import fs from "node:fs";
 
-const project = process.env.GOOGLE_CLOUD_PROJECT;
-const location = process.env.GOOGLE_CLOUD_REGION ?? "us-central1";
-
-if (!project) throw new Error("Missing GOOGLE_CLOUD_PROJECT");
-
-// Three accepted formats, in priority order:
-//   1. GOOGLE_APPLICATION_CREDENTIALS       — file path (best for local dev)
-//   2. GOOGLE_APPLICATION_CREDENTIALS_B64   — base64-encoded JSON (best for Vercel/cloud)
-//   3. GOOGLE_APPLICATION_CREDENTIALS_JSON  — raw inline JSON on a single line
+// Lazy init via Proxy — module load must NOT throw, otherwise `next build`
+// fails when collecting page data with no runtime env present. Env is only
+// required when the client is actually used (at request time on Cloud Run).
 function loadCredentials(): Record<string, unknown> | undefined {
   const path = process.env.GOOGLE_APPLICATION_CREDENTIALS;
   if (path) {
@@ -43,17 +37,32 @@ function loadCredentials(): Record<string, unknown> | undefined {
     }
   }
 
-  // No explicit credentials — fall back to ADC (gcloud auth application-default login, GCE metadata, etc.)
   return undefined;
 }
 
-const credentials = loadCredentials();
+let cached: GoogleGenAI | null = null;
 
-export const vertex = new GoogleGenAI({
-  vertexai: true,
-  project,
-  location,
-  googleAuthOptions: credentials ? { credentials } : undefined,
+function getVertex(): GoogleGenAI {
+  if (cached) return cached;
+  const project = process.env.GOOGLE_CLOUD_PROJECT;
+  const location = process.env.GOOGLE_CLOUD_REGION ?? "us-central1";
+  if (!project) throw new Error("Missing GOOGLE_CLOUD_PROJECT");
+  const credentials = loadCredentials();
+  cached = new GoogleGenAI({
+    vertexai: true,
+    project,
+    location,
+    googleAuthOptions: credentials ? { credentials } : undefined,
+  });
+  return cached;
+}
+
+export const vertex: GoogleGenAI = new Proxy({} as GoogleGenAI, {
+  get(_target, prop, receiver) {
+    const client = getVertex();
+    const value = Reflect.get(client, prop, receiver);
+    return typeof value === "function" ? value.bind(client) : value;
+  },
 });
 
 export const GEN_MODEL = "gemini-2.5-flash";
