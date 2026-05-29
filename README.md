@@ -47,7 +47,7 @@ Copy [.env.example](.env.example) → `.env.local` and fill in:
 | `GOOGLE_CLOUD_PROJECT` | Project ID (not number) |
 | `GOOGLE_CLOUD_REGION` | e.g. `us-central1` |
 | GCP credentials | Pick **one** of the three options below |
-| `NEXT_PUBLIC_SUPABASE_URL` | From Supabase settings |
+| `SUPABASE_URL` | From Supabase settings |
 | `SUPABASE_SERVICE_ROLE_KEY` | Server-only — never expose |
 | `UPSTASH_REDIS_REST_URL` / `_TOKEN` | Optional locally; required for production |
 | `CRON_SECRET` | Random string; Vercel cron uses it as `Authorization: Bearer …` |
